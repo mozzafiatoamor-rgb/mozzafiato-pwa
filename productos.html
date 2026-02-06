@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#43e97b">
+  <title>Productos - Mozzafiato</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+      background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+      min-height: 100vh;
+      padding: 15px;
+      color: #333;
+    }
+    
+    .container {
+      max-width: 500px;
+      margin: 0 auto;
+    }
+    
+    .header {
+      display: flex;
+      align-items: center;
+      color: white;
+      margin-bottom: 20px;
+      padding: 15px 0;
+    }
+    
+    .back-btn {
+      background: rgba(255,255,255,0.2);
+      border: none;
+      color: white;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      font-size: 20px;
+      cursor: pointer;
+      margin-right: 15px;
+    }
+    
+    .header h1 {
+      font-size: 24px;
+      flex: 1;
+    }
+    
+    .search-bar {
+      background: white;
+      border-radius: 15px;
+      padding: 12px 18px;
+      margin-bottom: 15px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    .search-bar input {
+      flex: 1;
+      border: none;
+      outline: none;
+      font-size: 16px;
+      background: transparent;
+    }
+    
+    .search-icon {
+      font-size: 18px;
+      color: #999;
+    }
+    
+    .filter-tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 20px;
+      overflow-x: auto;
+      padding-bottom: 5px;
+    }
+    
+    .filter-tab {
+      background: rgba(255,255,255,0.3);
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 25px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.3s;
+    }
+    
+    .filter-tab.active {
+      background: white;
+      color: #43e97b;
+    }
+    
+    .categoria-section {
+      margin-bottom: 20px;
+    }
+    
+    .categoria-header {
+      background: white;
+      padding: 15px;
+      border-radius: 15px 15px 0 0;
+      font-weight: bold;
+      font-size: 16px;
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    
+    .categoria-header.proteina {
+      background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    }
+    
+    .categoria-header.salsa {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+    
+    .categoria-header.pasta {
+      background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+    }
+    
+    .categoria-count {
+      background: rgba(255,255,255,0.3);
+      padding: 5px 12px;
+      border-radius: 15px;
+      font-size: 13px;
+    }
+    
+    .productos-list {
+      background: white;
+      border-radius: 0 0 15px 15px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+      overflow: hidden;
+    }
+    
+    .producto-item {
+      padding: 18px;
+      border-bottom: 1px solid #f0f0f0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .producto-item:last-child {
+      border-bottom: none;
+    }
+    
+    .producto-info {
+      flex: 1;
+    }
+    
+    .producto-nombre {
+      font-weight: 600;
+      font-size: 16px;
+      color: #333;
+      margin-bottom: 5px;
+    }
+    
+    .producto-meta {
+      font-size: 13px;
+      color: #666;
+      display: flex;
+      gap: 15px;
+    }
+    
+    .meta-item {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    
+    .status-badge {
+      padding: 6px 12px;
+      border-radius: 15px;
+      font-size: 12px;
+      font-weight: bold;
+    }
+    
+    .status-activo {
+      background: #d4edda;
+      color: #28a745;
+    }
+    
+    .status-inactivo {
+      background: #f8d7da;
+      color: #dc3545;
+    }
+    
+    .empty-state {
+      background: white;
+      border-radius: 15px;
+      padding: 60px 20px;
+      text-align: center;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+    
+    .empty-state-icon {
+      font-size: 64px;
+      margin-bottom: 15px;
+    }
+    
+    .empty-state h3 {
+      font-size: 18px;
+      color: #333;
+      margin-bottom: 10px;
+    }
+    
+    .empty-state p {
+      font-size: 14px;
+      color: #666;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <button class="back-btn" onclick="volver()">←</button>
+      <h1>📦 Productos</h1>
+    </div>
+    
+    <div class="search-bar">
+      <span class="search-icon">🔍</span>
+      <input type="text" id="searchInput" placeholder="Buscar producto..." onkeyup="buscarProductos()">
+    </div>
+    
+    <div class="filter-tabs">
+      <button class="filter-tab active" onclick="filtrarCategoria('todas')">Todas</button>
+      <button class="filter-tab" onclick="filtrarCategoria('Proteína')">🍖 Proteínas</button>
+      <button class="filter-tab" onclick="filtrarCategoria('Salsa')">🍝 Salsas</button>
+      <button class="filter-tab" onclick="filtrarCategoria('Pasta')">🍜 Pastas</button>
+    </div>
+    
+    <div id="productosContainer"></div>
+  </div>
+  
+  <script>
+    // Catálogo completo (luego de Google Sheets)
+    const catalogo = [
+      { id: 'P001', categoria: 'Proteína', nombre: 'Pollo', stockMin: 20, unidad: 'porciones', activo: true },
+      { id: 'P002', categoria: 'Proteína', nombre: 'Arrachera', stockMin: 15, unidad: 'porciones', activo: true },
+      { id: 'P003', categoria: 'Proteína', nombre: 'Carne de Hamburguesa', stockMin: 25, unidad: 'porciones', activo: true },
+      { id: 'P004', categoria: 'Proteína', nombre: 'Salmón', stockMin: 10, unidad: 'porciones', activo: true },
+      { id: 'P005', categoria: 'Proteína', nombre: 'Camarón', stockMin: 15, unidad: 'porciones', activo: true },
+      
+      { id: 'S001', categoria: 'Salsa', nombre: 'Alfredo', stockMin: 30, unidad: 'porciones', activo: true },
+      { id: 'S002', categoria: 'Salsa', nombre: 'Carbonara', stockMin: 30, unidad: 'porciones', activo: true },
+      { id: 'S003', categoria: 'Salsa', nombre: 'Boloñesa', stockMin: 25, unidad: 'porciones', activo: true },
+      { id: 'S004', categoria: 'Salsa', nombre: 'Matriciana', stockMin: 20, unidad: 'porciones', activo: true },
+      { id: 'S005', categoria: 'Salsa', nombre: 'Cuatro Quesos', stockMin: 25, unidad: 'porciones', activo: true },
+      { id: 'S006', categoria: 'Salsa', nombre: 'Portobelo', stockMin: 20, unidad: 'porciones', activo: true },
+      
+      { id: 'PA001', categoria: 'Pasta', nombre: 'Fettuccini', stockMin: 40, unidad: 'porciones', activo: true },
+      { id: 'PA002', categoria: 'Pasta', nombre: 'Fusilli', stockMin: 35, unidad: 'porciones', activo: true },
+      { id: 'PA003', categoria: 'Pasta', nombre: 'Lasaña', stockMin: 15, unidad: 'porciones', activo: true }
+    ];
+    
+    let filtroActual = 'todas';
+    let busquedaActual = '';
+    
+    function renderProductos() {
+      const container = document.getElementById('productosContainer');
+      
+      // Filtrar por categoría y búsqueda
+      let productosFiltrados = catalogo;
+      
+      if (filtroActual !== 'todas') {
+        productosFiltrados = productosFiltrados.filter(p => p.categoria === filtroActual);
+      }
+      
+      if (busquedaActual) {
+        productosFiltrados = productosFiltrados.filter(p => 
+          p.nombre.toLowerCase().includes(busquedaActual.toLowerCase()) ||
+          p.id.toLowerCase().includes(busquedaActual.toLowerCase())
+        );
+      }
+      
+      if (productosFiltrados.length === 0) {
+        container.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-state-icon">🔍</div>
+            <h3>No se encontraron productos</h3>
+            <p>Intenta con otra búsqueda o categoría</p>
+          </div>
+        `;
+        return;
+      }
+      
+      // Agrupar por categoría
+      const categorias = [...new Set(productosFiltrados.map(p => p.categoria))];
+      
+      container.innerHTML = categorias.map(cat => {
+        const productos = productosFiltrados.filter(p => p.categoria === cat);
+        const catClass = cat === 'Proteína' ? 'proteina' : cat === 'Salsa' ? 'salsa' : 'pasta';
+        const emoji = cat === 'Proteína' ? '🍖' : cat === 'Salsa' ? '🍝' : '🍜';
+        
+        return `
+          <div class="categoria-section">
+            <div class="categoria-header ${catClass}">
+              <div>${emoji} ${cat.toUpperCase()}S</div>
+              <div class="categoria-count">${productos.length}</div>
+            </div>
+            <div class="productos-list">
+              ${productos.map(prod => `
+                <div class="producto-item">
+                  <div class="producto-info">
+                    <div class="producto-nombre">${prod.nombre}</div>
+                    <div class="producto-meta">
+                      <div class="meta-item">
+                        <span>🆔</span>
+                        <span>${prod.id}</span>
+                      </div>
+                      <div class="meta-item">
+                        <span>📊</span>
+                        <span>Min: ${prod.stockMin}</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="status-badge ${prod.activo ? 'status-activo' : 'status-inactivo'}">
+                    ${prod.activo ? '✓ Activo' : '✕ Inactivo'}
+                  </div>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+    
+    function filtrarCategoria(categoria) {
+      filtroActual = categoria;
+      
+      // Actualizar tabs activos
+      document.querySelectorAll('.filter-tab').forEach(tab => {
+        tab.classList.remove('active');
+      });
+      event.target.classList.add('active');
+      
+      renderProductos();
+    }
+    
+    function buscarProductos() {
+      busquedaActual = document.getElementById('searchInput').value;
+      renderProductos();
+    }
+    
+    function volver() {
+      window.location.href = 'index.html';
+    }
+    
+    // Renderizar al cargar
+    renderProductos();
+  </script>
+</body>
+</html>
