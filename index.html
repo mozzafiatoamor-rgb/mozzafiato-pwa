@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#4285f4">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>Mozzafiato - Control de Producción</title>
+  <link rel="manifest" href="manifest.json">
+  <script src="config.js"></script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 20px;
+      color: #333;
+    }
+    
+    .container {
+      max-width: 500px;
+      margin: 0 auto;
+    }
+    
+    .header {
+      text-align: center;
+      color: white;
+      margin-bottom: 30px;
+      padding: 20px 0;
+    }
+    
+    .header h1 {
+      font-size: 32px;
+      margin-bottom: 5px;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+    
+    .header p {
+      font-size: 16px;
+      opacity: 0.9;
+    }
+    
+    .status-bar {
+      background: rgba(255,255,255,0.95);
+      padding: 15px;
+      border-radius: 15px;
+      margin-bottom: 20px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+    
+    .status-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 0;
+      border-bottom: 1px solid #f0f0f0;
+    }
+    
+    .status-item:last-child {
+      border-bottom: none;
+    }
+    
+    .status-label {
+      font-size: 14px;
+      color: #666;
+    }
+    
+    .status-value {
+      font-size: 18px;
+      font-weight: bold;
+      color: #4285f4;
+    }
+    
+    .status-value.warning {
+      color: #ea4335;
+    }
+    
+    .menu-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 15px;
+      margin-bottom: 20px;
+    }
+    
+    .menu-btn {
+      background: white;
+      border: none;
+      border-radius: 20px;
+      padding: 30px 20px;
+      text-align: center;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+      cursor: pointer;
+      transition: all 0.3s;
+      text-decoration: none;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    .menu-btn:active {
+      transform: scale(0.95);
+    }
+    
+    .menu-btn.primary {
+      grid-column: 1 / -1;
+      background: linear-gradient(135deg, #34a853 0%, #2e7d32 100%);
+      color: white;
+    }
+    
+    .menu-btn.secondary {
+      background: linear-gradient(135deg, #fbbc04 0%, #f57c00 100%);
+      color: white;
+    }
+    
+    .menu-icon {
+      font-size: 48px;
+    }
+    
+    .menu-text {
+      font-size: 16px;
+      font-weight: 600;
+    }
+    
+    .menu-btn.white .menu-text {
+      color: #333;
+    }
+    
+    .sync-status {
+      background: rgba(255,255,255,0.95);
+      padding: 12px;
+      border-radius: 10px;
+      text-align: center;
+      font-size: 13px;
+      margin-top: 15px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    
+    .sync-icon {
+      width: 16px;
+      height: 16px;
+      border: 2px solid #4285f4;
+      border-top-color: transparent;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+    
+    .sync-icon.success {
+      border: none;
+      width: auto;
+      height: auto;
+      animation: none;
+    }
+    
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    
+    .offline-badge {
+      background: #ea4335;
+      color: white;
+      padding: 8px 15px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: bold;
+      display: inline-block;
+      margin-top: 10px;
+    }
+    
+    .install-prompt {
+      background: white;
+      padding: 15px;
+      border-radius: 15px;
+      margin-bottom: 20px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+      display: none;
+    }
+    
+    .install-prompt.show {
+      display: block;
+    }
+    
+    .install-prompt h3 {
+      font-size: 16px;
+      margin-bottom: 8px;
+      color: #333;
+    }
+    
+    .install-prompt p {
+      font-size: 13px;
+      color: #666;
+      margin-bottom: 12px;
+    }
+    
+    .install-btn {
+      background: #4285f4;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: bold;
+      width: 100%;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>🍝 Mozzafiato</h1>
+      <p>Control de Producción</p>
+    </div>
+    
+    <div class="install-prompt" id="installPrompt">
+      <h3>📱 Instalar App</h3>
+      <p>Instala Mozzafiato en tu teléfono para acceso rápido y trabajo offline</p>
+      <button class="install-btn" id="installBtn">Instalar Ahora</button>
+    </div>
+    
+    <div class="status-bar">
+      <div class="status-item">
+        <span class="status-label">📦 Productos Totales</span>
+        <span class="status-value" id="totalProductos">...</span>
+      </div>
+      <div class="status-item">
+        <span class="status-label">⚠️ Stock Bajo</span>
+        <span class="status-value warning" id="stockBajo">...</span>
+      </div>
+      <div class="status-item">
+        <span class="status-label">📅 Hoy Producido</span>
+        <span class="status-value" id="hoyProducido">...</span>
+      </div>
+      <div class="status-item">
+        <span class="status-label">💰 Hoy Vendido</span>
+        <span class="status-value" id="hoyVendido">...</span>
+      </div>
+    </div>
+    
+    <div class="menu-grid">
+      <button class="menu-btn primary" onclick="irAProduccion()">
+        <span class="menu-icon">➕</span>
+        <span class="menu-text">Registrar Producción</span>
+      </button>
+      
+      <button class="menu-btn secondary" onclick="irAVentas()">
+        <span class="menu-icon">💰</span>
+        <span class="menu-text">Registrar Venta</span>
+      </button>
+      
+      <button class="menu-btn white" onclick="irAInventario()">
+        <span class="menu-icon">📊</span>
+        <span class="menu-text">Inventario</span>
+      </button>
+      
+      <button class="menu-btn white" onclick="irAStockBajo()">
+        <span class="menu-icon">🚨</span>
+        <span class="menu-text">Stock Bajo</span>
+      </button>
+      
+      <button class="menu-btn white" onclick="irAReportes()">
+        <span class="menu-icon">📈</span>
+        <span class="menu-text">Reportes</span>
+      </button>
+      
+      <button class="menu-btn white" onclick="irAProductos()">
+        <span class="menu-icon">📦</span>
+        <span class="menu-text">Productos</span>
+      </button>
+    </div>
+    
+    <div class="sync-status" id="syncStatus">
+      <span class="sync-icon"></span>
+      <span>Cargando...</span>
+    </div>
+  </div>
+  
+  <script>
+    // PWA Installation
+    let deferredPrompt;
+    
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      document.getElementById('installPrompt').classList.add('show');
+    });
+    
+    document.getElementById('installBtn').addEventListener('click', async () => {
+      if (!deferredPrompt) return;
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      console.log(`User response: ${outcome}`);
+      deferredPrompt = null;
+      document.getElementById('installPrompt').classList.remove('show');
+    });
+    
+    // Service Worker Registration
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('sw.js')
+        .then(reg => console.log('Service Worker registrado'))
+        .catch(err => console.log('Error al registrar SW:', err));
+    }
+    
+    // Check Online/Offline Status
+    function updateOnlineStatus() {
+      const syncStatus = document.getElementById('syncStatus');
+      if (navigator.onLine) {
+        syncStatus.innerHTML = '<span class="sync-icon success">✅</span><span>Sincronizado</span>';
+      } else {
+        syncStatus.innerHTML = '<span class="offline-badge">📵 Modo Offline</span>';
+      }
+    }
+    
+    window.addEventListener('online', updateOnlineStatus);
+    window.addEventListener('offline', updateOnlineStatus);
+    updateOnlineStatus();
+    
+    // Navigation Functions
+    function irAProduccion() {
+      window.location.href = 'produccion.html';
+    }
+    
+    function irAVentas() {
+      window.location.href = 'ventas.html';
+    }
+    
+    function irAInventario() {
+      window.location.href = 'inventario.html';
+    }
+    
+    function irAStockBajo() {
+      window.location.href = 'stock-bajo.html';
+    }
+    
+    function irAReportes() {
+      window.location.href = 'reportes.html';
+    }
+    
+    function irAProductos() {
+      window.location.href = 'productos.html';
+    }
+    
+    // CARGAR ESTADÍSTICAS DESDE GOOGLE SHEETS
+    async function cargarEstadisticas() {
+      try {
+        const syncStatus = document.getElementById('syncStatus');
+        syncStatus.innerHTML = '<span class="sync-icon"></span><span>Sincronizando...</span>';
+        
+        const response = await fetch(`${CONFIG.WEB_APP_URL}?action=getEstadisticas`);
+        const data = await response.json();
+        
+        if (data.stats) {
+          document.getElementById('totalProductos').textContent = data.stats.totalProductos;
+          document.getElementById('stockBajo').textContent = data.stats.stockBajo;
+          document.getElementById('hoyProducido').textContent = data.stats.hoyProducido;
+          document.getElementById('hoyVendido').textContent = data.stats.hoyVendido;
+          
+          // Guardar en cache
+          localStorage.setItem('mozzafiato_stats', JSON.stringify(data.stats));
+          
+          syncStatus.innerHTML = '<span class="sync-icon success">✅</span><span>Actualizado</span>';
+        }
+      } catch (error) {
+        console.error('Error al cargar estadísticas:', error);
+        
+        // Cargar desde cache si hay error
+        const cached = localStorage.getItem('mozzafiato_stats');
+        if (cached) {
+          const stats = JSON.parse(cached);
+          document.getElementById('totalProductos').textContent = stats.totalProductos;
+          document.getElementById('stockBajo').textContent = stats.stockBajo;
+          document.getElementById('hoyProducido').textContent = stats.hoyProducido;
+          document.getElementById('hoyVendido').textContent = stats.hoyVendido;
+        }
+        
+        document.getElementById('syncStatus').innerHTML = '<span class="offline-badge">❌ Error de conexión</span>';
+      }
+    }
+    
+    // Cargar al inicio
+    cargarEstadisticas();
+    
+    // Recargar cada 60 segundos
+    setInterval(cargarEstadisticas, 60000);
+  </script>
+</body>
+</html>
