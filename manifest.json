@@ -2,7 +2,7 @@
   "name": "Mozzafiato - Control de Producción",
   "short_name": "Mozzafiato",
   "description": "Sistema de control de producción y ventas para restaurante de pastas",
-  "start_url": "/",
+  "start_url": "./",
   "display": "standalone",
   "background_color": "#667eea",
   "theme_color": "#4285f4",
@@ -27,21 +27,21 @@
       "name": "Registrar Producción",
       "short_name": "Producción",
       "description": "Registrar nueva producción",
-      "url": "/produccion.html",
+      "url": "./produccion.html",
       "icons": [{ "src": "icon-192.png", "sizes": "192x192" }]
     },
     {
       "name": "Registrar Venta",
       "short_name": "Venta",
       "description": "Registrar nueva venta",
-      "url": "/ventas.html",
+      "url": "./ventas.html",
       "icons": [{ "src": "icon-192.png", "sizes": "192x192" }]
     },
     {
       "name": "Ver Inventario",
       "short_name": "Inventario",
       "description": "Ver estado del inventario",
-      "url": "/inventario.html",
+      "url": "./inventario.html",
       "icons": [{ "src": "icon-192.png", "sizes": "192x192" }]
     }
   ]
