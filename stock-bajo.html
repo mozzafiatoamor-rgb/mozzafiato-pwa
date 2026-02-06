@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#ea4335">
+  <title>Stock Bajo - Mozzafiato</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+      background: linear-gradient(135deg, #ea4335 0%, #c62828 100%);
+      min-height: 100vh;
+      padding: 15px;
+      color: #333;
+    }
+    
+    .container {
+      max-width: 500px;
+      margin: 0 auto;
+    }
+    
+    .header {
+      display: flex;
+      align-items: center;
+      color: white;
+      margin-bottom: 20px;
+      padding: 15px 0;
+    }
+    
+    .back-btn {
+      background: rgba(255,255,255,0.2);
+      border: none;
+      color: white;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      font-size: 20px;
+      cursor: pointer;
+      margin-right: 15px;
+    }
+    
+    .header h1 {
+      font-size: 24px;
+      flex: 1;
+    }
+    
+    .alert-info {
+      background: white;
+      padding: 15px;
+      border-radius: 15px;
+      margin-bottom: 20px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    
+    .alert-icon {
+      font-size: 32px;
+    }
+    
+    .alert-text {
+      flex: 1;
+    }
+    
+    .alert-text strong {
+      display: block;
+      font-size: 16px;
+      color: #ea4335;
+      margin-bottom: 3px;
+    }
+    
+    .alert-text p {
+      font-size: 13px;
+      color: #666;
+    }
+    
+    .producto-card {
+      background: white;
+      border-radius: 15px;
+      padding: 20px;
+      margin-bottom: 15px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+      border-left: 5px solid #ea4335;
+    }
+    
+    .producto-card.agotado {
+      border-left-color: #c62828;
+      background: #ffebee;
+    }
+    
+    .producto-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: start;
+      margin-bottom: 15px;
+    }
+    
+    .producto-nombre {
+      font-size: 18px;
+      font-weight: bold;
+      color: #333;
+      margin-bottom: 5px;
+    }
+    
+    .producto-categoria {
+      font-size: 13px;
+      color: #666;
+      background: #f5f5f5;
+      padding: 4px 10px;
+      border-radius: 12px;
+      display: inline-block;
+    }
+    
+    .stock-badge {
+      padding: 10px 18px;
+      border-radius: 25px;
+      font-size: 20px;
+      font-weight: bold;
+      text-align: center;
+    }
+    
+    .stock-bajo {
+      background: #fff3cd;
+      color: #f57c00;
+    }
+    
+    .stock-agotado {
+      background: #f8d7da;
+      color: #c62828;
+    }
+    
+    .producto-stats {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+      margin-bottom: 15px;
+    }
+    
+    .stat-item {
+      background: #f8f9fa;
+      padding: 12px;
+      border-radius: 10px;
+      text-align: center;
+    }
+    
+    .stat-label {
+      font-size: 11px;
+      color: #666;
+      margin-bottom: 5px;
+    }
+    
+    .stat-value {
+      font-size: 18px;
+      font-weight: bold;
+      color: #333;
+    }
+    
+    .faltante {
+      background: #ffebee;
+      padding: 12px;
+      border-radius: 10px;
+      text-align: center;
+      border: 2px dashed #ea4335;
+    }
+    
+    .faltante-label {
+      font-size: 12px;
+      color: #ea4335;
+      font-weight: bold;
+      margin-bottom: 5px;
+    }
+    
+    .faltante-value {
+      font-size: 24px;
+      font-weight: bold;
+      color: #c62828;
+    }
+    
+    .btn-producir {
+      width: 100%;
+      padding: 14px;
+      background: linear-gradient(135deg, #34a853 0%, #2e7d32 100%);
+      color: white;
+      border: none;
+      border-radius: 10px;
+      font-size: 15px;
+      font-weight: bold;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    
+    .empty-state {
+      background: white;
+      border-radius: 15px;
+      padding: 60px 20px;
+      text-align: center;
+      color: #666;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+    
+    .empty-state-icon {
+      font-size: 64px;
+      margin-bottom: 15px;
+    }
+    
+    .empty-state h3 {
+      font-size: 20px;
+      color: #333;
+      margin-bottom: 10px;
+    }
+    
+    .empty-state p {
+      font-size: 14px;
+      color: #666;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <button class="back-btn" onclick="volver()">←</button>
+      <h1>🚨 Stock Bajo</h1>
+    </div>
+    
+    <div class="alert-info" id="alertInfo">
+      <div class="alert-icon">⚠️</div>
+      <div class="alert-text">
+        <strong>Alerta de Inventario</strong>
+        <p id="alertMessage">Cargando...</p>
+      </div>
+    </div>
+    
+    <div id="stockBajoContainer"></div>
+  </div>
+  
+  <script>
+    // Datos simulados (luego de Google Sheets)
+    const inventario = [
+      { categoria: 'Proteína', producto: 'Pollo', stock: 45, minimo: 20 },
+      { categoria: 'Proteína', producto: 'Arrachera', stock: 30, minimo: 15 },
+      { categoria: 'Proteína', producto: 'Carne de Hamburguesa', stock: 50, minimo: 25 },
+      { categoria: 'Proteína', producto: 'Salmón', stock: 8, minimo: 10 },
+      { categoria: 'Proteína', producto: 'Camarón', stock: 15, minimo: 15 },
+      { categoria: 'Salsa', producto: 'Alfredo', stock: 60, minimo: 30 },
+      { categoria: 'Salsa', producto: 'Carbonara', stock: 55, minimo: 30 },
+      { categoria: 'Salsa', producto: 'Boloñesa', stock: 40, minimo: 25 },
+      { categoria: 'Salsa', producto: 'Matriciana', stock: 25, minimo: 20 },
+      { categoria: 'Salsa', producto: 'Cuatro Quesos', stock: 35, minimo: 25 },
+      { categoria: 'Salsa', producto: 'Portobelo', stock: 20, minimo: 20 },
+      { categoria: 'Pasta', producto: 'Fettuccini', stock: 80, minimo: 40 },
+      { categoria: 'Pasta', producto: 'Fusilli', stock: 70, minimo: 35 },
+      { categoria: 'Pasta', producto: 'Lasaña', stock: 12, minimo: 15 }
+    ];
+    
+    function renderStockBajo() {
+      const container = document.getElementById('stockBajoContainer');
+      const alertMessage = document.getElementById('alertMessage');
+      
+      // Filtrar productos con stock bajo o agotado
+      const productosAlerta = inventario.filter(item => item.stock <= item.minimo);
+      
+      if (productosAlerta.length === 0) {
+        alertMessage.textContent = '¡Todo bien! No hay productos con stock bajo.';
+        container.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-state-icon">✅</div>
+            <h3>¡Inventario Saludable!</h3>
+            <p>Todos los productos tienen stock suficiente</p>
+          </div>
+        `;
+        return;
+      }
+      
+      const agotados = productosAlerta.filter(item => item.stock === 0).length;
+      const bajos = productosAlerta.length - agotados;
+      
+      alertMessage.textContent = `${productosAlerta.length} productos requieren atención`;
+      if (agotados > 0) {
+        alertMessage.textContent += ` (${agotados} agotados)`;
+      }
+      
+      container.innerHTML = productosAlerta.map(prod => {
+        const faltante = prod.minimo - prod.stock;
+        const esAgotado = prod.stock === 0;
+        const emoji = prod.categoria === 'Proteína' ? '🍖' : prod.categoria === 'Salsa' ? '🍝' : '🍜';
+        
+        return `
+          <div class="producto-card ${esAgotado ? 'agotado' : ''}">
+            <div class="producto-header">
+              <div>
+                <div class="producto-nombre">${prod.producto}</div>
+                <div class="producto-categoria">${emoji} ${prod.categoria}</div>
+              </div>
+              <div class="stock-badge ${esAgotado ? 'stock-agotado' : 'stock-bajo'}">
+                ${esAgotado ? '⛔' : '⚠️'} ${prod.stock}
+              </div>
+            </div>
+            
+            <div class="producto-stats">
+              <div class="stat-item">
+                <div class="stat-label">Stock Actual</div>
+                <div class="stat-value">${prod.stock}</div>
+              </div>
+              <div class="stat-item">
+                <div class="stat-label">Stock Mínimo</div>
+                <div class="stat-value">${prod.minimo}</div>
+              </div>
+            </div>
+            
+            <div class="faltante">
+              <div class="faltante-label">${esAgotado ? 'PRODUCIR URGENTE' : 'FALTANTE'}</div>
+              <div class="faltante-value">${faltante > 0 ? faltante : prod.minimo} porciones</div>
+            </div>
+            
+            <button class="btn-producir" onclick="irAProduccion('${prod.producto}')">
+              ➕ Registrar Producción
+            </button>
+          </div>
+        `;
+      }).join('');
+    }
+    
+    function irAProduccion(producto) {
+      // Guardar producto seleccionado para pre-llenar formulario
+      localStorage.setItem('producto_prellenar', producto);
+      window.location.href = 'produccion.html';
+    }
+    
+    function volver() {
+      window.location.href = 'index.html';
+    }
+    
+    // Renderizar al cargar
+    renderStockBajo();
+  </script>
+</body>
+</html>

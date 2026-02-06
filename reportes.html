@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#4285f4">
+  <title>Reportes - Mozzafiato</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+      background: linear-gradient(135deg, #4285f4 0%, #1565c0 100%);
+      min-height: 100vh;
+      padding: 15px;
+      color: #333;
+    }
+    
+    .container {
+      max-width: 500px;
+      margin: 0 auto;
+      padding-bottom: 30px;
+    }
+    
+    .header {
+      display: flex;
+      align-items: center;
+      color: white;
+      margin-bottom: 20px;
+      padding: 15px 0;
+    }
+    
+    .back-btn {
+      background: rgba(255,255,255,0.2);
+      border: none;
+      color: white;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      font-size: 20px;
+      cursor: pointer;
+      margin-right: 15px;
+    }
+    
+    .header h1 {
+      font-size: 24px;
+      flex: 1;
+    }
+    
+    .section {
+      background: white;
+      border-radius: 15px;
+      padding: 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+    
+    .section-title {
+      font-size: 16px;
+      font-weight: bold;
+      color: #333;
+      margin-bottom: 15px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .chart-container {
+      margin: 15px 0;
+    }
+    
+    .bar-item {
+      margin-bottom: 15px;
+    }
+    
+    .bar-label {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 5px;
+      font-size: 14px;
+    }
+    
+    .bar-label-text {
+      font-weight: 600;
+      color: #333;
+    }
+    
+    .bar-label-value {
+      color: #666;
+    }
+    
+    .bar-track {
+      height: 25px;
+      background: #f0f0f0;
+      border-radius: 12px;
+      overflow: hidden;
+      position: relative;
+    }
+    
+    .bar-fill {
+      height: 100%;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      padding-right: 10px;
+      color: white;
+      font-size: 12px;
+      font-weight: bold;
+      transition: width 0.5s ease;
+    }
+    
+    .bar-fill.proteina {
+      background: linear-gradient(90deg, #f093fb 0%, #f5576c 100%);
+    }
+    
+    .bar-fill.salsa {
+      background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+    }
+    
+    .bar-fill.pasta {
+      background: linear-gradient(90deg, #43e97b 0%, #38f9d7 100%);
+    }
+    
+    .top-item {
+      display: flex;
+      align-items: center;
+      padding: 12px;
+      background: #f8f9fa;
+      border-radius: 10px;
+      margin-bottom: 10px;
+    }
+    
+    .top-rank {
+      width: 30px;
+      height: 30px;
+      background: #4285f4;
+      color: white;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      font-size: 14px;
+      margin-right: 12px;
+    }
+    
+    .top-rank.gold {
+      background: linear-gradient(135deg, #ffd700 0%, #ffb700 100%);
+    }
+    
+    .top-rank.silver {
+      background: linear-gradient(135deg, #c0c0c0 0%, #909090 100%);
+    }
+    
+    .top-rank.bronze {
+      background: linear-gradient(135deg, #cd7f32 0%, #a0522d 100%);
+    }
+    
+    .top-info {
+      flex: 1;
+    }
+    
+    .top-name {
+      font-weight: 600;
+      color: #333;
+      margin-bottom: 3px;
+    }
+    
+    .top-category {
+      font-size: 12px;
+      color: #666;
+    }
+    
+    .top-value {
+      font-size: 20px;
+      font-weight: bold;
+      color: #4285f4;
+    }
+    
+    .stat-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+      margin-top: 15px;
+    }
+    
+    .stat-card {
+      background: #f8f9fa;
+      padding: 15px;
+      border-radius: 10px;
+      text-align: center;
+    }
+    
+    .stat-value {
+      font-size: 28px;
+      font-weight: bold;
+      color: #4285f4;
+      margin-bottom: 5px;
+    }
+    
+    .stat-label {
+      font-size: 12px;
+      color: #666;
+    }
+    
+    .percent-badge {
+      background: #e3f2fd;
+      color: #1565c0;
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: bold;
+      display: inline-block;
+      margin-top: 5px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <button class="back-btn" onclick="volver()">←</button>
+      <h1>📈 Reportes</h1>
+    </div>
+    
+    <!-- Resumen por Categoría -->
+    <div class="section">
+      <div class="section-title">📊 Producción por Categoría</div>
+      <div class="chart-container" id="chartCategorias"></div>
+    </div>
+    
+    <!-- Top 5 Productos -->
+    <div class="section">
+      <div class="section-title">🏆 Top 5 Productos Más Vendidos</div>
+      <div id="topProductos"></div>
+    </div>
+    
+    <!-- Producción por Turno -->
+    <div class="section">
+      <div class="section-title">⏰ Producción por Turno</div>
+      <div class="chart-container" id="chartTurnos"></div>
+      <div class="stat-grid">
+        <div class="stat-card">
+          <div class="stat-value">620</div>
+          <div class="stat-label">Matutino</div>
+          <div class="percent-badge">55%</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value">510</div>
+          <div class="stat-label">Vespertino</div>
+          <div class="percent-badge">45%</div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Estadísticas Generales -->
+    <div class="section">
+      <div class="section-title">📋 Resumen General</div>
+      <div class="stat-grid">
+        <div class="stat-card">
+          <div class="stat-value">1,130</div>
+          <div class="stat-label">Total Producido</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value">845</div>
+          <div class="stat-label">Total Vendido</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value">285</div>
+          <div class="stat-label">Stock Actual</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value">75%</div>
+          <div class="stat-label">Efectividad</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <script>
+    // Datos simulados (luego de Google Sheets)
+    const datosCategorias = [
+      { categoria: 'Proteína', producido: 395, porcentaje: 35 },
+      { categoria: 'Salsa', producido: 510, porcentaje: 45 },
+      { categoria: 'Pasta', producido: 225, porcentaje: 20 }
+    ];
+    
+    const topProductos = [
+      { rank: 1, nombre: 'Fettuccini', categoria: 'Pasta', vendido: 120 },
+      { rank: 2, nombre: 'Fusilli', categoria: 'Pasta', vendido: 110 },
+      { rank: 3, nombre: 'Alfredo', categoria: 'Salsa', vendido: 90 },
+      { rank: 4, nombre: 'Carbonara', categoria: 'Salsa', vendido: 85 },
+      { rank: 5, nombre: 'Pollo', categoria: 'Proteína', vendido: 75 }
+    ];
+    
+    function renderCategorias() {
+      const container = document.getElementById('chartCategorias');
+      const maxValor = Math.max(...datosCategorias.map(d => d.producido));
+      
+      container.innerHTML = datosCategorias.map(cat => {
+        const clase = cat.categoria.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+        const width = (cat.producido / maxValor) * 100;
+        
+        return `
+          <div class="bar-item">
+            <div class="bar-label">
+              <span class="bar-label-text">${cat.categoria}</span>
+              <span class="bar-label-value">${cat.producido} porciones</span>
+            </div>
+            <div class="bar-track">
+              <div class="bar-fill ${clase}" style="width: ${width}%">
+                ${cat.porcentaje}%
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+    
+    function renderTopProductos() {
+      const container = document.getElementById('topProductos');
+      
+      container.innerHTML = topProductos.map(prod => {
+        let rankClass = '';
+        if (prod.rank === 1) rankClass = 'gold';
+        else if (prod.rank === 2) rankClass = 'silver';
+        else if (prod.rank === 3) rankClass = 'bronze';
+        
+        const emoji = prod.categoria === 'Proteína' ? '🍖' : prod.categoria === 'Salsa' ? '🍝' : '🍜';
+        
+        return `
+          <div class="top-item">
+            <div class="top-rank ${rankClass}">${prod.rank}</div>
+            <div class="top-info">
+              <div class="top-name">${prod.nombre}</div>
+              <div class="top-category">${emoji} ${prod.categoria}</div>
+            </div>
+            <div class="top-value">${prod.vendido}</div>
+          </div>
+        `;
+      }).join('');
+    }
+    
+    function renderTurnos() {
+      const container = document.getElementById('chartTurnos');
+      
+      const turnos = [
+        { turno: 'Matutino', cantidad: 620, porcentaje: 55 },
+        { turno: 'Vespertino', cantidad: 510, porcentaje: 45 }
+      ];
+      
+      container.innerHTML = turnos.map(t => {
+        return `
+          <div class="bar-item">
+            <div class="bar-label">
+              <span class="bar-label-text">${t.turno === 'Matutino' ? '🌅' : '🌆'} ${t.turno}</span>
+              <span class="bar-label-value">${t.cantidad} porciones</span>
+            </div>
+            <div class="bar-track">
+              <div class="bar-fill salsa" style="width: ${t.porcentaje}%">
+                ${t.porcentaje}%
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+    
+    function volver() {
+      window.location.href = 'index.html';
+    }
+    
+    // Renderizar al cargar
+    renderCategorias();
+    renderTopProductos();
+    renderTurnos();
+  </script>
+</body>
+</html>

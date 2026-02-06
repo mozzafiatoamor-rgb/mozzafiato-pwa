@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#9c27b0">
+  <title>Inventario - Mozzafiato</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+      background: linear-gradient(135deg, #9c27b0 0%, #6a1b9a 100%);
+      min-height: 100vh;
+      padding: 15px;
+      color: #333;
+    }
+    
+    .container {
+      max-width: 500px;
+      margin: 0 auto;
+    }
+    
+    .header {
+      display: flex;
+      align-items: center;
+      color: white;
+      margin-bottom: 20px;
+      padding: 15px 0;
+    }
+    
+    .back-btn {
+      background: rgba(255,255,255,0.2);
+      border: none;
+      color: white;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      font-size: 20px;
+      cursor: pointer;
+      margin-right: 15px;
+    }
+    
+    .header h1 {
+      font-size: 24px;
+      flex: 1;
+    }
+    
+    .filter-bar {
+      background: white;
+      border-radius: 15px;
+      padding: 15px;
+      margin-bottom: 15px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+    
+    .filter-bar select {
+      width: 100%;
+      padding: 12px;
+      border: 2px solid #e0e0e0;
+      border-radius: 10px;
+      font-size: 14px;
+    }
+    
+    .categoria-section {
+      margin-bottom: 20px;
+    }
+    
+    .categoria-header {
+      background: white;
+      padding: 15px;
+      border-radius: 15px 15px 0 0;
+      font-weight: bold;
+      font-size: 16px;
+      color: white;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    .categoria-header.proteina {
+      background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    }
+    
+    .categoria-header.salsa {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+    
+    .categoria-header.pasta {
+      background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+    }
+    
+    .productos-list {
+      background: white;
+      border-radius: 0 0 15px 15px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+      overflow: hidden;
+    }
+    
+    .producto-item {
+      padding: 15px;
+      border-bottom: 1px solid #f0f0f0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .producto-item:last-child {
+      border-bottom: none;
+    }
+    
+    .producto-info {
+      flex: 1;
+    }
+    
+    .producto-nombre {
+      font-weight: 600;
+      font-size: 15px;
+      color: #333;
+      margin-bottom: 5px;
+    }
+    
+    .producto-stats {
+      font-size: 12px;
+      color: #666;
+    }
+    
+    .stock-badge {
+      padding: 8px 15px;
+      border-radius: 20px;
+      font-size: 18px;
+      font-weight: bold;
+      min-width: 60px;
+      text-align: center;
+    }
+    
+    .stock-normal {
+      background: #d4edda;
+      color: #28a745;
+    }
+    
+    .stock-bajo {
+      background: #fff3cd;
+      color: #ffc107;
+    }
+    
+    .stock-agotado {
+      background: #f8d7da;
+      color: #dc3545;
+    }
+    
+    .empty-state {
+      background: white;
+      border-radius: 15px;
+      padding: 40px 20px;
+      text-align: center;
+      color: #666;
+    }
+    
+    .empty-state-icon {
+      font-size: 48px;
+      margin-bottom: 15px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <button class="back-btn" onclick="volver()">←</button>
+      <h1>📊 Inventario</h1>
+    </div>
+    
+    <div class="filter-bar">
+      <select id="filtroCategoria" onchange="filtrarInventario()">
+        <option value="todas">📋 Todas las categorías</option>
+        <option value="Proteína">🍖 Proteínas</option>
+        <option value="Salsa">🍝 Salsas</option>
+        <option value="Pasta">🍜 Pastas</option>
+      </select>
+    </div>
+    
+    <div id="inventarioContainer"></div>
+  </div>
+  
+  <script>
+    // Datos de inventario simulados (luego vendrán de Google Sheets)
+    const inventario = [
+      // Proteínas
+      { categoria: 'Proteína', producto: 'Pollo', stock: 45, producido: 120, vendido: 75, minimo: 20 },
+      { categoria: 'Proteína', producto: 'Arrachera', stock: 30, producido: 80, vendido: 50, minimo: 15 },
+      { categoria: 'Proteína', producto: 'Carne de Hamburguesa', stock: 50, producido: 100, vendido: 50, minimo: 25 },
+      { categoria: 'Proteína', producto: 'Salmón', stock: 8, producido: 35, vendido: 27, minimo: 10 },
+      { categoria: 'Proteína', producto: 'Camarón', stock: 15, producido: 60, vendido: 45, minimo: 15 },
+      
+      // Salsas
+      { categoria: 'Salsa', producto: 'Alfredo', stock: 60, producido: 150, vendido: 90, minimo: 30 },
+      { categoria: 'Salsa', producto: 'Carbonara', stock: 55, producido: 140, vendido: 85, minimo: 30 },
+      { categoria: 'Salsa', producto: 'Boloñesa', stock: 40, producido: 100, vendido: 60, minimo: 25 },
+      { categoria: 'Salsa', producto: 'Matriciana', stock: 25, producido: 70, vendido: 45, minimo: 20 },
+      { categoria: 'Salsa', producto: 'Cuatro Quesos', stock: 35, producido: 90, vendido: 55, minimo: 25 },
+      { categoria: 'Salsa', producto: 'Portobelo', stock: 20, producido: 60, vendido: 40, minimo: 20 },
+      
+      // Pastas
+      { categoria: 'Pasta', producto: 'Fettuccini', stock: 80, producido: 200, vendido: 120, minimo: 40 },
+      { categoria: 'Pasta', producto: 'Fusilli', stock: 70, producido: 180, vendido: 110, minimo: 35 },
+      { categoria: 'Pasta', producto: 'Lasaña', stock: 12, producido: 45, vendido: 33, minimo: 15 }
+    ];
+    
+    function getEstado(stock, minimo) {
+      if (stock <= 0) return { estado: 'agotado', icono: '⛔', clase: 'stock-agotado' };
+      if (stock <= minimo) return { estado: 'bajo', icono: '⚠️', clase: 'stock-bajo' };
+      return { estado: 'normal', icono: '✅', clase: 'stock-normal' };
+    }
+    
+    function renderInventario(filtro = 'todas') {
+      const container = document.getElementById('inventarioContainer');
+      const inventarioFiltrado = filtro === 'todas' 
+        ? inventario 
+        : inventario.filter(item => item.categoria === filtro);
+      
+      if (inventarioFiltrado.length === 0) {
+        container.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-state-icon">📭</div>
+            <p>No hay productos en esta categoría</p>
+          </div>
+        `;
+        return;
+      }
+      
+      const categorias = [...new Set(inventarioFiltrado.map(item => item.categoria))];
+      
+      container.innerHTML = categorias.map(cat => {
+        const productos = inventarioFiltrado.filter(item => item.categoria === cat);
+        const catClass = cat === 'Proteína' ? 'proteina' : cat === 'Salsa' ? 'salsa' : 'pasta';
+        const emoji = cat === 'Proteína' ? '🍖' : cat === 'Salsa' ? '🍝' : '🍜';
+        
+        return `
+          <div class="categoria-section">
+            <div class="categoria-header ${catClass}">
+              <span>${emoji}</span>
+              <span>${cat.toUpperCase()}S</span>
+            </div>
+            <div class="productos-list">
+              ${productos.map(prod => {
+                const estado = getEstado(prod.stock, prod.minimo);
+                return `
+                  <div class="producto-item">
+                    <div class="producto-info">
+                      <div class="producto-nombre">${prod.producto}</div>
+                      <div class="producto-stats">
+                        Producido: ${prod.producido} | Vendido: ${prod.vendido} | Mínimo: ${prod.minimo}
+                      </div>
+                    </div>
+                    <div class="stock-badge ${estado.clase}">
+                      ${estado.icono} ${prod.stock}
+                    </div>
+                  </div>
+                `;
+              }).join('')}
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+    
+    function filtrarInventario() {
+      const filtro = document.getElementById('filtroCategoria').value;
+      renderInventario(filtro);
+    }
+    
+    function volver() {
+      window.location.href = 'index.html';
+    }
+    
+    // Renderizar al cargar
+    renderInventario();
+  </script>
+</body>
+</html>
