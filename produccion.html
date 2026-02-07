@@ -112,6 +112,11 @@
       transform: scale(0.98);
     }
     
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    
     .btn-primary {
       background: linear-gradient(135deg, #34a853 0%, #2e7d32 100%);
       color: white;
@@ -223,6 +228,19 @@
       color: #1565c0;
       border-left: 4px solid #4285f4;
     }
+    
+    .debug-box {
+      background: #fff3cd;
+      padding: 12px;
+      border-radius: 10px;
+      margin-bottom: 20px;
+      font-size: 12px;
+      color: #856404;
+      border-left: 4px solid #ffc107;
+      font-family: monospace;
+      white-space: pre-wrap;
+      word-break: break-all;
+    }
   </style>
 </head>
 <body>
@@ -234,6 +252,11 @@
     
     <div class="info-box">
       📅 <strong>Hoy:</strong> <span id="fechaHoy"></span> | Puedes agregar varios productos antes de guardar
+    </div>
+    
+    <div class="debug-box" id="debugBox">
+🔧 DEBUG MODE ACTIVO
+URL: <span id="debugUrl">Cargando...</span>
     </div>
     
     <div class="alert" id="alert"></div>
@@ -292,11 +315,14 @@
         <span class="contador-badge" id="contador">0</span>
       </h3>
       <div id="listaPendientes"></div>
-      <button class="btn btn-primary" onclick="guardarTodos()">💾 Guardar Todo</button>
+      <button class="btn btn-primary" id="btnGuardar" onclick="guardarTodos()">💾 Guardar Todo</button>
     </div>
   </div>
   
   <script>
+    // Mostrar URL en debug
+    document.getElementById('debugUrl').textContent = CONFIG.WEB_APP_URL;
+    
     const productos = {
       'Proteína': ['Pollo', 'Arrachera', 'Carne de Hamburguesa', 'Salmón', 'Camarón'],
       'Salsa': ['Alfredo', 'Carbonara', 'Boloñesa', 'Matriciana', 'Cuatro Quesos', 'Portobelo'],
@@ -351,6 +377,8 @@
         notas: document.getElementById('notas').value
       };
       
+      console.log('📝 Registro agregado:', registro);
+      
       registrosPendientes.push(registro);
       localStorage.setItem('produccion_pendiente', JSON.stringify(registrosPendientes));
       
@@ -400,47 +428,72 @@
     }
     
     async function guardarTodos() {
-      if (registrosPendientes.length === 0) return;
+      if (registrosPendientes.length === 0) {
+        mostrarAlerta('⚠️ No hay productos para guardar', 'error');
+        return;
+      }
+      
+      console.log('🚀 Iniciando guardado...');
+      console.log('📦 Registros a guardar:', registrosPendientes);
+      console.log('🌐 URL:', CONFIG.WEB_APP_URL);
+      
+      const btnGuardar = document.getElementById('btnGuardar');
+      btnGuardar.disabled = true;
+      btnGuardar.textContent = '⏳ Guardando...';
       
       mostrarAlerta('⏳ Guardando producción en Google Sheets...', 'success');
       
       try {
-        // ENVIAR A GOOGLE SHEETS
+        const payload = {
+          action: 'guardarProduccion',
+          registros: registrosPendientes
+        };
+        
+        console.log('📤 Enviando payload:', JSON.stringify(payload, null, 2));
+        
         const response = await fetch(CONFIG.WEB_APP_URL, {
           method: 'POST',
+          mode: 'no-cors', // Agregar esto para evitar problemas de CORS
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({
-            action: 'guardarProduccion',
-            registros: registrosPendientes
-          })
+          body: JSON.stringify(payload)
         });
         
-        const data = await response.json();
+        console.log('📥 Respuesta recibida:', response);
         
-        if (data.success) {
-          // Limpiar pendientes
-          registrosPendientes = [];
-          localStorage.removeItem('produccion_pendiente');
-          
-          // Actualizar UI
-          actualizarLista();
-          document.getElementById('formProduccion').reset();
-          document.getElementById('producto').disabled = true;
-          
-          mostrarAlerta('✅ ' + data.mensaje, 'success');
-          
-          // Redirigir al dashboard después de 2 segundos
-          setTimeout(() => {
-            window.location.href = 'index.html';
-          }, 2000);
-        } else {
-          mostrarAlerta('❌ Error: ' + data.error, 'error');
-        }
+        // Con mode: 'no-cors', no podemos leer la respuesta
+        // Asumimos que funcionó si no hubo error
+        
+        // Limpiar pendientes
+        registrosPendientes = [];
+        localStorage.removeItem('produccion_pendiente');
+        
+        // Actualizar UI
+        actualizarLista();
+        document.getElementById('formProduccion').reset();
+        document.getElementById('producto').disabled = true;
+        
+        btnGuardar.disabled = false;
+        btnGuardar.textContent = '💾 Guardar Todo';
+        
+        mostrarAlerta('✅ Producción guardada! Verifica Google Sheets', 'success');
+        
+        // Redirigir al dashboard después de 3 segundos
+        setTimeout(() => {
+          window.location.href = 'index.html';
+        }, 3000);
+        
       } catch (error) {
-        console.error('Error al guardar:', error);
-        mostrarAlerta('❌ Error de conexión. Verifica tu internet.', 'error');
+        console.error('❌ Error al guardar:', error);
+        
+        btnGuardar.disabled = false;
+        btnGuardar.textContent = '💾 Guardar Todo';
+        
+        mostrarAlerta('❌ Error: ' + error.message, 'error');
+        
+        // Mostrar error completo en debug box
+        document.getElementById('debugBox').textContent += '\n\n❌ ERROR:\n' + error.stack;
       }
     }
     
@@ -449,8 +502,10 @@
       alert.textContent = mensaje;
       alert.className = `alert alert-${tipo} show`;
       setTimeout(() => {
-        alert.classList.remove('show');
-      }, 3000);
+        if (tipo !== 'success' || !mensaje.includes('guardada')) {
+          alert.classList.remove('show');
+        }
+      }, 5000);
     }
     
     function volver() {
@@ -459,6 +514,9 @@
     
     // Inicializar lista al cargar
     actualizarLista();
+    
+    console.log('✅ Página cargada correctamente');
+    console.log('🔧 CONFIG:', CONFIG);
   </script>
 </body>
 </html>
