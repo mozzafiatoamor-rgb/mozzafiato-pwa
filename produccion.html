@@ -404,7 +404,7 @@
       mostrarAlerta('❌ Producto eliminado de la lista', 'error');
     }
     
-    function guardarTodos() {
+    async function guardarTodos() {
       if (registrosPendientes.length === 0) {
         mostrarAlerta('⚠️ No hay productos para guardar', 'error');
         return;
@@ -416,45 +416,68 @@
       
       mostrarAlerta('⏳ Enviando a Google Sheets...', 'success');
       
-      // Usar Google Apps Script con redirect
-      const url = CONFIG.WEB_APP_URL + 
-        '?action=guardarProduccion' + 
-        '&registros=' + encodeURIComponent(JSON.stringify(registrosPendientes));
+      console.log('🚀 Intentando guardar:', registrosPendientes);
+      console.log('📍 URL:', CONFIG.WEB_APP_URL);
       
-      // Abrir en iframe oculto
-      const iframe = document.createElement('iframe');
-      iframe.style.display = 'none';
-      iframe.src = url;
-      document.body.appendChild(iframe);
-      
-      // TIMEOUT DE RESPALDO: Asumir éxito después de 3 segundos
-      setTimeout(() => {
-        // Limpiar
-        document.body.removeChild(iframe);
+      try {
+        const response = await fetch(CONFIG.WEB_APP_URL, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            action: 'guardarProduccion',
+            registros: registrosPendientes
+          }),
+          redirect: 'follow'
+        });
         
-        // Guardar copia de seguridad antes de limpiar
-        const backup = JSON.parse(JSON.stringify(registrosPendientes));
-        console.log('Backup guardado:', backup);
+        console.log('📥 Response status:', response.status);
+        console.log('📥 Response type:', response.type);
         
-        // Limpiar pendientes
-        registrosPendientes = [];
-        localStorage.removeItem('produccion_pendiente');
+        const textResponse = await response.text();
+        console.log('📄 Response text:', textResponse);
         
-        // Actualizar UI
-        actualizarLista();
-        document.getElementById('formProduccion').reset();
-        document.getElementById('producto').disabled = true;
+        let data;
+        try {
+          data = JSON.parse(textResponse);
+        } catch (e) {
+          console.error('Error parseando JSON:', e);
+          throw new Error('Respuesta no es JSON válido');
+        }
+        
+        console.log('📦 Data parsed:', data);
+        
+        if (data.success) {
+          // Limpiar pendientes
+          registrosPendientes = [];
+          localStorage.removeItem('produccion_pendiente');
+          
+          // Actualizar UI
+          actualizarLista();
+          document.getElementById('formProduccion').reset();
+          document.getElementById('producto').disabled = true;
+          
+          btnGuardar.disabled = false;
+          btnGuardar.textContent = '💾 Guardar Todo';
+          
+          mostrarAlerta('✅ ' + data.mensaje, 'success');
+          
+          // Redirigir al dashboard
+          setTimeout(() => {
+            window.location.href = 'index.html';
+          }, 2000);
+        } else {
+          throw new Error(data.error || 'Error desconocido');
+        }
+      } catch (error) {
+        console.error('❌ Error completo:', error);
         
         btnGuardar.disabled = false;
         btnGuardar.textContent = '💾 Guardar Todo';
         
-        mostrarAlerta('✅ Producción guardada en Google Sheets. Verifica el documento.', 'success');
-        
-        // Redirigir al dashboard
-        setTimeout(() => {
-          window.location.href = 'index.html';
-        }, 2000);
-      }, 3000);
+        mostrarAlerta('❌ Error: ' + error.message, 'error');
+      }
     }
     
     function mostrarAlerta(mensaje, tipo) {
@@ -462,7 +485,7 @@
       alert.textContent = mensaje;
       alert.className = `alert alert-${tipo} show`;
       setTimeout(() => {
-        if (!mensaje.includes('guardada') && !mensaje.includes('Enviando')) {
+        if (!mensaje.includes('productos') && !mensaje.includes('Enviando')) {
           alert.classList.remove('show');
         }
       }, 5000);
