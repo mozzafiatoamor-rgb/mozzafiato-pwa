@@ -404,7 +404,7 @@
       mostrarAlerta('❌ Producto eliminado de la lista', 'error');
     }
     
-    async function guardarTodos() {
+    function guardarTodos() {
       if (registrosPendientes.length === 0) {
         mostrarAlerta('⚠️ No hay productos para guardar', 'error');
         return;
@@ -416,37 +416,20 @@
       
       mostrarAlerta('⏳ Enviando a Google Sheets...', 'success');
       
-      console.log('🚀 Intentando guardar:', registrosPendientes);
-      console.log('📍 URL:', CONFIG.WEB_APP_URL);
+      // Crear callback único
+      const callbackName = 'jsonpCallback_' + Date.now();
       
-      try {
-        const response = await fetch(CONFIG.WEB_APP_URL, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            action: 'guardarProduccion',
-            registros: registrosPendientes
-          }),
-          redirect: 'follow'
-        });
+      // Definir función callback global
+      window[callbackName] = function(data) {
+        console.log('✅ Respuesta recibida:', data);
         
-        console.log('📥 Response status:', response.status);
-        console.log('📥 Response type:', response.type);
+        // Limpiar
+        delete window[callbackName];
+        const script = document.getElementById(callbackName);
+        if (script) script.remove();
         
-        const textResponse = await response.text();
-        console.log('📄 Response text:', textResponse);
-        
-        let data;
-        try {
-          data = JSON.parse(textResponse);
-        } catch (e) {
-          console.error('Error parseando JSON:', e);
-          throw new Error('Respuesta no es JSON válido');
-        }
-        
-        console.log('📦 Data parsed:', data);
+        btnGuardar.disabled = false;
+        btnGuardar.textContent = '💾 Guardar Todo';
         
         if (data.success) {
           // Limpiar pendientes
@@ -458,9 +441,6 @@
           document.getElementById('formProduccion').reset();
           document.getElementById('producto').disabled = true;
           
-          btnGuardar.disabled = false;
-          btnGuardar.textContent = '💾 Guardar Todo';
-          
           mostrarAlerta('✅ ' + data.mensaje, 'success');
           
           // Redirigir al dashboard
@@ -468,16 +448,36 @@
             window.location.href = 'index.html';
           }, 2000);
         } else {
-          throw new Error(data.error || 'Error desconocido');
+          mostrarAlerta('❌ Error: ' + (data.error || 'Error desconocido'), 'error');
         }
-      } catch (error) {
-        console.error('❌ Error completo:', error);
+      };
+      
+      // Crear URL con JSONP
+      const registrosJson = encodeURIComponent(JSON.stringify(registrosPendientes));
+      const url = CONFIG.WEB_APP_URL + 
+        '?action=guardarProduccion' +
+        '&registros=' + registrosJson +
+        '&callback=' + callbackName;
+      
+      console.log('📤 Enviando via JSONP:', url.substring(0, 200) + '...');
+      
+      // Crear script tag
+      const script = document.createElement('script');
+      script.id = callbackName;
+      script.src = url;
+      
+      // Manejar errores
+      script.onerror = function() {
+        console.error('❌ Error cargando script');
+        delete window[callbackName];
         
         btnGuardar.disabled = false;
         btnGuardar.textContent = '💾 Guardar Todo';
         
-        mostrarAlerta('❌ Error: ' + error.message, 'error');
-      }
+        mostrarAlerta('❌ Error de conexión. Verifica tu internet.', 'error');
+      };
+      
+      document.body.appendChild(script);
     }
     
     function mostrarAlerta(mensaje, tipo) {
