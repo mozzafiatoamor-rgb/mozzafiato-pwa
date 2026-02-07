@@ -402,33 +402,45 @@
     async function guardarTodos() {
       if (registrosPendientes.length === 0) return;
       
-      mostrarAlerta('⏳ Guardando producción...', 'success');
+      mostrarAlerta('⏳ Guardando producción en Google Sheets...', 'success');
       
-      // Guardar en localStorage temporal (luego sincronizará con Google Sheets)
-      const produccionGuardada = JSON.parse(localStorage.getItem('produccion_guardada')) || [];
-      registrosPendientes.forEach(r => {
-        r.fecha = new Date().toISOString();
-        r.id = 'PROD-' + Date.now() + '-' + Math.random();
-        produccionGuardada.push(r);
-      });
-      
-      localStorage.setItem('produccion_guardada', JSON.stringify(produccionGuardada));
-      
-      // Limpiar pendientes
-      registrosPendientes = [];
-      localStorage.removeItem('produccion_pendiente');
-      
-      // Actualizar UI
-      actualizarLista();
-      document.getElementById('formProduccion').reset();
-      document.getElementById('producto').disabled = true;
-      
-      mostrarAlerta('✅ ¡Producción guardada exitosamente!', 'success');
-      
-      // Solicitar sincronización en segundo plano
-      if ('serviceWorker' in navigator && 'sync' in navigator.serviceWorker) {
-        const registration = await navigator.serviceWorker.ready;
-        await registration.sync.register('sync-data');
+      try {
+        // ENVIAR A GOOGLE SHEETS
+        const response = await fetch(CONFIG.WEB_APP_URL, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            action: 'guardarProduccion',
+            registros: registrosPendientes
+          })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+          // Limpiar pendientes
+          registrosPendientes = [];
+          localStorage.removeItem('produccion_pendiente');
+          
+          // Actualizar UI
+          actualizarLista();
+          document.getElementById('formProduccion').reset();
+          document.getElementById('producto').disabled = true;
+          
+          mostrarAlerta('✅ ' + data.mensaje, 'success');
+          
+          // Redirigir al dashboard después de 2 segundos
+          setTimeout(() => {
+            window.location.href = 'index.html';
+          }, 2000);
+        } else {
+          mostrarAlerta('❌ Error: ' + data.error, 'error');
+        }
+      } catch (error) {
+        console.error('Error al guardar:', error);
+        mostrarAlerta('❌ Error de conexión. Verifica tu internet.', 'error');
       }
     }
     
