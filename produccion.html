@@ -301,6 +301,9 @@
     </div>
   </div>
   
+  <!-- Iframe oculto para recibir respuesta -->
+  <iframe id="hidden-iframe" name="hidden-iframe" style="display:none;"></iframe>
+  
   <script>
     const productos = {
       'Proteína': ['Pollo', 'Arrachera', 'Carne de Hamburguesa', 'Salmón', 'Camarón'],
@@ -322,6 +325,37 @@
       const option = document.createElement('option');
       option.value = r;
       respList.appendChild(option);
+    });
+    
+    // Escuchar mensajes del iframe
+    window.addEventListener('message', function(event) {
+      console.log('Mensaje recibido:', event.data);
+      
+      if (event.data.type === 'produccion-guardada') {
+        const btnGuardar = document.getElementById('btnGuardar');
+        btnGuardar.disabled = false;
+        btnGuardar.textContent = '💾 Guardar Todo';
+        
+        if (event.data.success) {
+          // Limpiar pendientes
+          registrosPendientes = [];
+          localStorage.removeItem('produccion_pendiente');
+          
+          // Actualizar UI
+          actualizarLista();
+          document.getElementById('formProduccion').reset();
+          document.getElementById('producto').disabled = true;
+          
+          mostrarAlerta('✅ ' + event.data.mensaje, 'success');
+          
+          // Redirigir al dashboard
+          setTimeout(() => {
+            window.location.href = 'index.html';
+          }, 2000);
+        } else {
+          mostrarAlerta('❌ Error: ' + event.data.mensaje, 'error');
+        }
+      }
     });
     
     // Cambio de categoría
@@ -416,7 +450,7 @@
       
       mostrarAlerta('⏳ Enviando a Google Sheets...', 'success');
       
-      // Crear formulario oculto para enviar datos
+      // Crear formulario oculto
       const form = document.createElement('form');
       form.method = 'POST';
       form.action = CONFIG.WEB_APP_URL;
@@ -432,44 +466,12 @@
       
       form.appendChild(input);
       document.body.appendChild(form);
-      
-      // Crear iframe oculto
-      let iframe = document.getElementById('hidden-iframe');
-      if (!iframe) {
-        iframe = document.createElement('iframe');
-        iframe.id = 'hidden-iframe';
-        iframe.name = 'hidden-iframe';
-        iframe.style.display = 'none';
-        document.body.appendChild(iframe);
-      }
-      
-      // Enviar formulario
       form.submit();
       
-      // Simular éxito después de 2 segundos (Google Apps Script procesa en background)
+      // Limpiar formulario después de enviarlo
       setTimeout(() => {
-        // Limpiar pendientes
-        registrosPendientes = [];
-        localStorage.removeItem('produccion_pendiente');
-        
-        // Actualizar UI
-        actualizarLista();
-        document.getElementById('formProduccion').reset();
-        document.getElementById('producto').disabled = true;
-        
-        btnGuardar.disabled = false;
-        btnGuardar.textContent = '💾 Guardar Todo';
-        
-        // Limpiar formulario temporal
         document.body.removeChild(form);
-        
-        mostrarAlerta('✅ ¡Producción guardada! Verifica Google Sheets en unos segundos', 'success');
-        
-        // Redirigir al dashboard
-        setTimeout(() => {
-          window.location.href = 'index.html';
-        }, 2000);
-      }, 2000);
+      }, 1000);
     }
     
     function mostrarAlerta(mensaje, tipo) {
@@ -477,7 +479,7 @@
       alert.textContent = mensaje;
       alert.className = `alert alert-${tipo} show`;
       setTimeout(() => {
-        if (!mensaje.includes('guardada')) {
+        if (!mensaje.includes('guardada') && !mensaje.includes('Enviando')) {
           alert.classList.remove('show');
         }
       }, 5000);
