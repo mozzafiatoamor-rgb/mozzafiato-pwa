@@ -69,27 +69,48 @@ class MozzafiatoAPI {
   }
   
   // Guardar producción
-  async guardarProduccion(registros) {
+ async guardarProduccion(registros) {
+  return new Promise((resolve, reject) => {
     try {
-      const response = await fetch(this.baseUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          action: 'guardarProduccion',
-          registros: registros
-        })
-      });
+      // Crear callback único
+      const callbackName = 'jsonpCallback_' + Date.now();
       
-      const data = await response.json();
-      return data;
+      // Definir función callback global
+      window[callbackName] = function(data) {
+        // Limpiar
+        delete window[callbackName];
+        const script = document.getElementById(callbackName);
+        if (script) script.remove();
+        
+        resolve(data);
+      };
+      
+      // Crear URL con JSONP
+      const registrosJson = encodeURIComponent(JSON.stringify(registros));
+      const url = this.baseUrl + 
+        '?action=guardarProduccion' +
+        '&registros=' + registrosJson +
+        '&callback=' + callbackName;
+      
+      // Crear script tag
+      const script = document.createElement('script');
+      script.id = callbackName;
+      script.src = url;
+      
+      // Manejar errores
+      script.onerror = function() {
+        delete window[callbackName];
+        reject(new Error('Error de conexión con Google Sheets'));
+      };
+      
+      document.body.appendChild(script);
+      
     } catch (error) {
       console.error('Error al guardar producción:', error);
-      return { success: false, error: error.message };
+      reject(error);
     }
-  }
-  
+  });
+} 
   // Guardar ventas
   async guardarVentas(registros) {
     try {
