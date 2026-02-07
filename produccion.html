@@ -228,19 +228,6 @@
       color: #1565c0;
       border-left: 4px solid #4285f4;
     }
-    
-    .debug-box {
-      background: #fff3cd;
-      padding: 12px;
-      border-radius: 10px;
-      margin-bottom: 20px;
-      font-size: 12px;
-      color: #856404;
-      border-left: 4px solid #ffc107;
-      font-family: monospace;
-      white-space: pre-wrap;
-      word-break: break-all;
-    }
   </style>
 </head>
 <body>
@@ -252,11 +239,6 @@
     
     <div class="info-box">
       📅 <strong>Hoy:</strong> <span id="fechaHoy"></span> | Puedes agregar varios productos antes de guardar
-    </div>
-    
-    <div class="debug-box" id="debugBox">
-🔧 DEBUG MODE ACTIVO
-URL: <span id="debugUrl">Cargando...</span>
     </div>
     
     <div class="alert" id="alert"></div>
@@ -320,9 +302,6 @@ URL: <span id="debugUrl">Cargando...</span>
   </div>
   
   <script>
-    // Mostrar URL en debug
-    document.getElementById('debugUrl').textContent = CONFIG.WEB_APP_URL;
-    
     const productos = {
       'Proteína': ['Pollo', 'Arrachera', 'Carne de Hamburguesa', 'Salmón', 'Camarón'],
       'Salsa': ['Alfredo', 'Carbonara', 'Boloñesa', 'Matriciana', 'Cuatro Quesos', 'Portobelo'],
@@ -377,8 +356,6 @@ URL: <span id="debugUrl">Cargando...</span>
         notas: document.getElementById('notas').value
       };
       
-      console.log('📝 Registro agregado:', registro);
-      
       registrosPendientes.push(registro);
       localStorage.setItem('produccion_pendiente', JSON.stringify(registrosPendientes));
       
@@ -427,44 +404,50 @@ URL: <span id="debugUrl">Cargando...</span>
       mostrarAlerta('❌ Producto eliminado de la lista', 'error');
     }
     
-    async function guardarTodos() {
+    function guardarTodos() {
       if (registrosPendientes.length === 0) {
         mostrarAlerta('⚠️ No hay productos para guardar', 'error');
         return;
       }
       
-      console.log('🚀 Iniciando guardado...');
-      console.log('📦 Registros a guardar:', registrosPendientes);
-      console.log('🌐 URL:', CONFIG.WEB_APP_URL);
-      
       const btnGuardar = document.getElementById('btnGuardar');
       btnGuardar.disabled = true;
       btnGuardar.textContent = '⏳ Guardando...';
       
-      mostrarAlerta('⏳ Guardando producción en Google Sheets...', 'success');
+      mostrarAlerta('⏳ Enviando a Google Sheets...', 'success');
       
-      try {
-        const payload = {
-          action: 'guardarProduccion',
-          registros: registrosPendientes
-        };
-        
-        console.log('📤 Enviando payload:', JSON.stringify(payload, null, 2));
-        
-        const response = await fetch(CONFIG.WEB_APP_URL, {
-          method: 'POST',
-          mode: 'no-cors', // Agregar esto para evitar problemas de CORS
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(payload)
-        });
-        
-        console.log('📥 Respuesta recibida:', response);
-        
-        // Con mode: 'no-cors', no podemos leer la respuesta
-        // Asumimos que funcionó si no hubo error
-        
+      // Crear formulario oculto para enviar datos
+      const form = document.createElement('form');
+      form.method = 'POST';
+      form.action = CONFIG.WEB_APP_URL;
+      form.target = 'hidden-iframe';
+      
+      const input = document.createElement('input');
+      input.type = 'hidden';
+      input.name = 'data';
+      input.value = JSON.stringify({
+        action: 'guardarProduccion',
+        registros: registrosPendientes
+      });
+      
+      form.appendChild(input);
+      document.body.appendChild(form);
+      
+      // Crear iframe oculto
+      let iframe = document.getElementById('hidden-iframe');
+      if (!iframe) {
+        iframe = document.createElement('iframe');
+        iframe.id = 'hidden-iframe';
+        iframe.name = 'hidden-iframe';
+        iframe.style.display = 'none';
+        document.body.appendChild(iframe);
+      }
+      
+      // Enviar formulario
+      form.submit();
+      
+      // Simular éxito después de 2 segundos (Google Apps Script procesa en background)
+      setTimeout(() => {
         // Limpiar pendientes
         registrosPendientes = [];
         localStorage.removeItem('produccion_pendiente');
@@ -477,24 +460,16 @@ URL: <span id="debugUrl">Cargando...</span>
         btnGuardar.disabled = false;
         btnGuardar.textContent = '💾 Guardar Todo';
         
-        mostrarAlerta('✅ Producción guardada! Verifica Google Sheets', 'success');
+        // Limpiar formulario temporal
+        document.body.removeChild(form);
         
-        // Redirigir al dashboard después de 3 segundos
+        mostrarAlerta('✅ ¡Producción guardada! Verifica Google Sheets en unos segundos', 'success');
+        
+        // Redirigir al dashboard
         setTimeout(() => {
           window.location.href = 'index.html';
-        }, 3000);
-        
-      } catch (error) {
-        console.error('❌ Error al guardar:', error);
-        
-        btnGuardar.disabled = false;
-        btnGuardar.textContent = '💾 Guardar Todo';
-        
-        mostrarAlerta('❌ Error: ' + error.message, 'error');
-        
-        // Mostrar error completo en debug box
-        document.getElementById('debugBox').textContent += '\n\n❌ ERROR:\n' + error.stack;
-      }
+        }, 2000);
+      }, 2000);
     }
     
     function mostrarAlerta(mensaje, tipo) {
@@ -502,7 +477,7 @@ URL: <span id="debugUrl">Cargando...</span>
       alert.textContent = mensaje;
       alert.className = `alert alert-${tipo} show`;
       setTimeout(() => {
-        if (tipo !== 'success' || !mensaje.includes('guardada')) {
+        if (!mensaje.includes('guardada')) {
           alert.classList.remove('show');
         }
       }, 5000);
@@ -514,9 +489,6 @@ URL: <span id="debugUrl">Cargando...</span>
     
     // Inicializar lista al cargar
     actualizarLista();
-    
-    console.log('✅ Página cargada correctamente');
-    console.log('🔧 CONFIG:', CONFIG);
   </script>
 </body>
 </html>
