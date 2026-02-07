@@ -8,7 +8,7 @@ const CONFIG = {
   
   // URL del Web App desplegado de Google Apps Script
   // Lo obtendrás en el PASO 4
-  WEB_APP_URL: 'https://script.google.com/macros/s/AKfycbzWhQwxhUrBvf3M5YA9-N8jDn0v2q3ulmI6A8kT9c_fSD162-VXfgEvtVyIVJ3IuF5LAQ/exec',
+  WEB_APP_URL: 'https://script.google.com/macros/s/AKfycbxjRdtpjiVgHNSyT52gecamhMclggM-fznSKuEkRmJN3mFf6msDM3f1JPh0rCapRJu0uQ/exec',
   
   // Configuración de sincronización
   SYNC_INTERVAL: 60000, // 60 segundos
