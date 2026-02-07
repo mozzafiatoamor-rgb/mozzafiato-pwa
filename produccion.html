@@ -301,9 +301,6 @@
     </div>
   </div>
   
-  <!-- Iframe oculto para comunicación con Google Apps Script -->
-  <iframe id="api-frame" style="display:none;"></iframe>
-  
   <script>
     const productos = {
       'Proteína': ['Pollo', 'Arrachera', 'Carne de Hamburguesa', 'Salmón', 'Camarón'],
@@ -312,7 +309,6 @@
     };
     
     let registrosPendientes = JSON.parse(localStorage.getItem('produccion_pendiente')) || [];
-    let apiReady = false;
     
     // Mostrar fecha actual
     const hoy = new Date();
@@ -326,48 +322,6 @@
       const option = document.createElement('option');
       option.value = r;
       respList.appendChild(option);
-    });
-    
-    // Cargar iframe de API
-    const apiFrame = document.getElementById('api-frame');
-    apiFrame.src = CONFIG.WEB_APP_URL + '?page=api';
-    
-    console.log('📡 Cargando API desde:', CONFIG.WEB_APP_URL + '?page=api');
-    
-    // Escuchar mensajes del iframe
-    window.addEventListener('message', function(event) {
-      console.log('📨 Mensaje recibido:', event.data);
-      
-      if (event.data.type === 'api-ready') {
-        apiReady = true;
-        console.log('✅ API lista para usar');
-      }
-      
-      if (event.data.type === 'produccion-guardada') {
-        const result = event.data.result;
-        const btnGuardar = document.getElementById('btnGuardar');
-        
-        console.log('📦 Resultado:', result);
-        
-        btnGuardar.disabled = false;
-        btnGuardar.textContent = '💾 Guardar Todo';
-        
-        if (result.success) {
-          registrosPendientes = [];
-          localStorage.removeItem('produccion_pendiente');
-          actualizarLista();
-          document.getElementById('formProduccion').reset();
-          document.getElementById('producto').disabled = true;
-          
-          mostrarAlerta('✅ ' + result.mensaje, 'success');
-          
-          setTimeout(() => {
-            window.location.href = 'index.html';
-          }, 2000);
-        } else {
-          mostrarAlerta('❌ Error: ' + result.error, 'error');
-        }
-      }
     });
     
     // Cambio de categoría
@@ -411,7 +365,6 @@
       }
       
       actualizarLista();
-      
       document.getElementById('cantidad').value = '';
       document.getElementById('notas').value = '';
       
@@ -448,15 +401,9 @@
       mostrarAlerta('❌ Producto eliminado de la lista', 'error');
     }
     
-    function guardarTodos() {
+    async function guardarTodos() {
       if (registrosPendientes.length === 0) {
         mostrarAlerta('⚠️ No hay productos para guardar', 'error');
-        return;
-      }
-      
-      if (!apiReady) {
-        mostrarAlerta('⏳ Esperando conexión con Google Sheets...', 'error');
-        setTimeout(guardarTodos, 1000); // Reintentar en 1 segundo
         return;
       }
       
@@ -464,15 +411,55 @@
       btnGuardar.disabled = true;
       btnGuardar.textContent = '⏳ Guardando...';
       
-      mostrarAlerta('⏳ Enviando a Google Sheets...', 'success');
+      mostrarAlerta('⏳ Guardando en Google Sheets (esto puede tardar 5-10 segundos)...', 'success');
       
-      console.log('📤 Enviando registros:', registrosPendientes);
-      
-      // Enviar mensaje al iframe
-      apiFrame.contentWindow.postMessage({
-        action: 'guardarProduccion',
-        registros: registrosPendientes
-      }, '*');
+      // Usar la API de config.js
+      try {
+        const result = await api.guardarProduccion(registrosPendientes);
+        
+        console.log('📦 Resultado:', result);
+        
+        btnGuardar.disabled = false;
+        btnGuardar.textContent = '💾 Guardar Todo';
+        
+        if (result.success) {
+          registrosPendientes = [];
+          localStorage.removeItem('produccion_pendiente');
+          actualizarLista();
+          document.getElementById('formProduccion').reset();
+          document.getElementById('producto').disabled = true;
+          
+          mostrarAlerta('✅ ' + result.mensaje, 'success');
+          
+          setTimeout(() => {
+            window.location.href = 'index.html';
+          }, 2000);
+        } else {
+          mostrarAlerta('❌ Error: ' + (result.error || 'Error desconocido'), 'error');
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        
+        btnGuardar.disabled = false;
+        btnGuardar.textContent = '💾 Guardar Todo';
+        
+        mostrarAlerta('❌ Error de conexión. Los datos se guardarán cuando vuelvas a tener internet.', 'error');
+        
+        // Guardar para sincronizar después
+        const produccionGuardada = JSON.parse(localStorage.getItem('produccion_guardada')) || [];
+        registrosPendientes.forEach(r => {
+          r.fecha = new Date().toISOString();
+          produccionGuardada.push(r);
+        });
+        localStorage.setItem('produccion_guardada', JSON.stringify(produccionGuardada));
+        
+        // Limpiar pendientes
+        registrosPendientes = [];
+        localStorage.removeItem('produccion_pendiente');
+        actualizarLista();
+        document.getElementById('formProduccion').reset();
+        document.getElementById('producto').disabled = true;
+      }
     }
     
     function mostrarAlerta(mensaje, tipo) {
@@ -480,7 +467,7 @@
       alert.textContent = mensaje;
       alert.className = `alert alert-${tipo} show`;
       setTimeout(() => {
-        if (!mensaje.includes('productos') && !mensaje.includes('Enviando') && !mensaje.includes('Esperando')) {
+        if (!mensaje.includes('productos') && !mensaje.includes('Guardando')) {
           alert.classList.remove('show');
         }
       }, 5000);
